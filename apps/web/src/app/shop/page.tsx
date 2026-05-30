@@ -1,6 +1,6 @@
+export const dynamic = "force-dynamic";
 import { Suspense } from "react";
-import { prisma } from "db";
-import { parseJsonArray } from "@/lib/utils";
+import { STATIC_PRODUCTS, STATIC_CATEGORIES } from "@/lib/static-catalog";
 import { getSiteContent } from "@/lib/content";
 import NavbarServer from "@/components/NavbarServer";
 import FooterServer from "@/components/FooterServer";
@@ -10,8 +10,6 @@ import SortSelect from "@/components/shop/SortSelect";
 import ActiveFilters from "@/components/shop/ActiveFilters";
 import ProductCard, { type ProductCardData } from "@/components/home/ProductCard";
 import type { Metadata } from "next";
-
-export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getSiteContent();
@@ -31,87 +29,52 @@ type SearchParams = Promise<{
   q?: string;
 }>;
 
-async function getProducts(params: Awaited<SearchParams>): Promise<ProductCardData[]> {
+function getProducts(params: Awaited<SearchParams>): ProductCardData[] {
   const { category, concentration, gender, family, filter, sort, q } = params;
 
-  const products = await prisma.product.findMany({
-    where: {
-      isActive: true,
-      ...(q && { name: { contains: q } }),
-      ...(category && { category: { slug: category } }),
-      ...(concentration && { concentration }),
-      ...(gender && { gender }),
-      ...(family && { family }),
-      ...(filter === "bestseller" && { isBestseller: true }),
-      ...(filter === "featured" && { isFeatured: true }),
-    },
-    include: {
-      variants: { orderBy: { price: "asc" } },
-    },
-    orderBy:
-      sort === "bestseller"
-        ? [{ isBestseller: "desc" }, { createdAt: "desc" }]
-        : { createdAt: "desc" },
-  });
-
-  const ids = products.map((p) => p.id);
-  const reviewStats = await prisma.review.groupBy({
-    by: ["productId"],
-    where: { productId: { in: ids } },
-    _avg: { rating: true },
-    _count: { id: true },
-  });
-  const statsMap = new Map(reviewStats.map((s) => [s.productId, { avg: s._avg.rating ?? 0, count: s._count.id }]));
-
-  const mapped: ProductCardData[] = products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    concentration: p.concentration,
-    family: p.family,
-    gender: p.gender,
-    images: parseJsonArray(p.images),
-    variants: p.variants.map((v) => ({
-      id: v.id,
-      size: v.size,
-      price: v.price,
-      salePrice: v.salePrice,
-      stock: v.stock,
-      sku: v.sku,
-    })),
-    avgRating: statsMap.get(p.id)?.avg ?? 0,
-    reviewCount: statsMap.get(p.id)?.count ?? 0,
-  }));
+  let results = STATIC_PRODUCTS.filter((p) => {
+    if (!p.isActive) return false;
+    if (q && !p.name.toLowerCase().includes(q.toLowerCase()) && !p.slug.includes(q.toLowerCase())) return false;
+    if (category && p.categorySlug !== category) return false;
+    if (concentration && p.concentration !== concentration) return false;
+    if (gender && p.gender !== gender) return false;
+    if (family && p.family !== family) return false;
+    if (filter === "bestseller" && !p.isBestseller) return false;
+    if (filter === "featured" && !p.isFeatured) return false;
+    return true;
+  }) as ProductCardData[];
 
   if (sort === "price-asc") {
-    return mapped.sort(
+    results = [...results].sort(
       (a, b) =>
         (a.variants[0]?.salePrice ?? a.variants[0]?.price ?? 0) -
         (b.variants[0]?.salePrice ?? b.variants[0]?.price ?? 0)
     );
-  }
-  if (sort === "price-desc") {
-    return mapped.sort(
+  } else if (sort === "price-desc") {
+    results = [...results].sort(
       (a, b) =>
         (b.variants[0]?.salePrice ?? b.variants[0]?.price ?? 0) -
         (a.variants[0]?.salePrice ?? a.variants[0]?.price ?? 0)
     );
+  } else if (sort === "bestseller") {
+    results = [...results].sort((a, b) => {
+      const aB = STATIC_PRODUCTS.find((p) => p.id === a.id)?.isBestseller ? 1 : 0;
+      const bB = STATIC_PRODUCTS.find((p) => p.id === b.id)?.isBestseller ? 1 : 0;
+      return bB - aB;
+    });
   }
 
-  return mapped;
-}
-
-async function getCategories() {
-  return prisma.category.findMany({ orderBy: { name: "asc" } });
+  return results;
 }
 
 export default async function ShopPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const [products, categories, content] = await Promise.all([
-    getProducts(params),
-    getCategories(),
+  const [products, content] = await Promise.all([
+    Promise.resolve(getProducts(params)),
     getSiteContent(),
   ]);
+
+  const categories = STATIC_CATEGORIES;
 
   const hasFilters =
     params.category ||
@@ -120,8 +83,8 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
     params.family ||
     params.filter;
 
-  const shopTitle    = content["shop_title"]    ?? "The Collection";
-  const shopSubtitle = content["shop_subtitle"] ?? "";
+  const shopTitle    = content["shop_title"]       ?? "The Collection";
+  const shopSubtitle = content["shop_subtitle"]    ?? "";
   const bannerImage  = content["shop_banner_image"] ?? "";
   const categoryLabel = categories.find((c) => c.slug === params.category)?.name;
   const heading = categoryLabel ?? shopTitle;
