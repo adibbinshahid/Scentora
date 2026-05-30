@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { prisma } from "db";
 import { parseJsonArray } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -26,43 +27,54 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-export const dynamic = "force-dynamic";
+export const revalidate = 900; // ISR: product + reviews regenerate every 15 min
+
+const getProductBySlug = (slug: string) =>
+  unstable_cache(
+    () =>
+      prisma.product.findUnique({
+        where: { slug, isActive: true },
+        include: {
+          variants: { orderBy: { price: "asc" } },
+          reviews: { orderBy: { createdAt: "desc" } },
+          category: true,
+        },
+      }),
+    ["product", slug],
+    { revalidate: 900, tags: ["products", `product-${slug}`] }
+  )();
+
+const getRelatedProducts = (family: string, excludeSlug: string) =>
+  unstable_cache(
+    async () => {
+      const related = await prisma.product.findMany({
+        where: { family, isActive: true, slug: { not: excludeSlug } },
+        include: { variants: { orderBy: { price: "asc" } } },
+        take: 4,
+      });
+      const ids = related.map((p) => p.id);
+      const stats = await prisma.review.groupBy({
+        by: ["productId"],
+        where: { productId: { in: ids } },
+        _avg: { rating: true },
+        _count: { id: true },
+      });
+      return { related, statsMap: new Map(stats.map((s) => [s.productId, { avg: s._avg.rating ?? 0, count: s._count.id }])) };
+    },
+    ["related", family, excludeSlug],
+    { revalidate: 1800, tags: ["products"] }
+  )();
 
 export default async function ProductPage({ params }: { params: Params }) {
   const { slug } = await params;
 
-  const product = await prisma.product.findUnique({
-    where: { slug, isActive: true },
-    include: {
-      variants: { orderBy: { price: "asc" } },
-      reviews: { orderBy: { createdAt: "desc" } },
-      category: true,
-    },
-  });
+  const product = await getProductBySlug(slug);
 
   if (!product) notFound();
 
-  // Related: same family, exclude current, max 4
-  const related = await prisma.product.findMany({
-    where: {
-      family: product.family,
-      isActive: true,
-      slug: { not: slug },
-    },
-    include: { variants: { orderBy: { price: "asc" } } },
-    take: 4,
-  });
+  const { related, statsMap: relatedStatsMap } = await getRelatedProducts(product.family, slug);
 
-  const relatedIds = related.map((p) => p.id);
-  const relatedStats = await prisma.review.groupBy({
-    by: ["productId"],
-    where: { productId: { in: relatedIds } },
-    _avg: { rating: true },
-    _count: { id: true },
-  });
-  const relatedStatsMap = new Map(relatedStats.map((s) => [s.productId, { avg: s._avg.rating ?? 0, count: s._count.id }]));
-
-  const relatedCards: ProductCardData[] = related.map((p) => ({
+  const relatedCards: ProductCardData[] = related.map((p: any) => ({
     id: p.id,
     name: p.name,
     slug: p.slug,
