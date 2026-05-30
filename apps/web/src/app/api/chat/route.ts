@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       `  Top notes: ${p.topNotes || "N/A"}`,
       `  Heart notes: ${p.heartNotes || "N/A"}`,
       `  Base notes: ${p.baseNotes || "N/A"}`,
-      `  Featured: ${p.featured} | Bestseller: ${p.bestseller}`,
+      `  Featured: ${p.isFeatured} | Bestseller: ${p.isBestseller}`,
       `  Variants:\n${variantLines}`,
     ].join("\n");
   }).join("\n\n");

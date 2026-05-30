@@ -54,7 +54,7 @@ export default async function OrdersPage() {
         {orders.length} {orders.length === 1 ? "order" : "orders"} total
       </p>
 
-      {orders.map((order) => {
+      {orders.map((order: any) => {
         const shippingAddr = (() => {
           try {
             return JSON.parse(order.shippingAddress);
@@ -93,7 +93,7 @@ export default async function OrdersPage() {
 
             {/* Items */}
             <div className="divide-y divide-border-primary">
-              {order.items.map((item) => (
+              {order.items.map((item: any) => (
                 <div key={item.id} className="flex items-center justify-between px-5 py-3.5">
                   <div>
                     <p className="text-sm text-text-primary">{item.productName}</p>

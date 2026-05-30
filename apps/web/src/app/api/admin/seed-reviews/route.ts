@@ -73,7 +73,6 @@ export async function POST() {
         isVerified: idx % 3 !== 0, // ~67% verified
         createdAt: new Date(now.getTime() - idx * 86_400_000 * 3), // spread over past months
       })),
-      skipDuplicates: false,
     });
     created += shuffled.length;
   }
