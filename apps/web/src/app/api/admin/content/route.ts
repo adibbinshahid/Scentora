@@ -13,7 +13,7 @@ const DEFAULT_CONTENT = [
   // ── Navigation ─────────────────────────────────────────────────────────
   { key: "nav_link1_label",            value: "Home",                                             type: "text",     label: "Nav Link 1 Label" },
   { key: "nav_link1_href",             value: "/",                                                type: "text",     label: "Nav Link 1 URL" },
-  { key: "nav_link2_label",            value: "Shop",                                             type: "text",     label: "Nav Link 2 Label" },
+  { key: "nav_link2_label",            value: "Collections",                                      type: "text",     label: "Nav Link 2 Label" },
   { key: "nav_link2_href",             value: "/shop",                                            type: "text",     label: "Nav Link 2 URL" },
   { key: "nav_link3_label",            value: "About Us",                                         type: "text",     label: "Nav Link 3 Label" },
   { key: "nav_link3_href",             value: "/about",                                           type: "text",     label: "Nav Link 3 URL" },
@@ -66,7 +66,7 @@ const DEFAULT_CONTENT = [
   { key: "newsletter_success",         value: "You're inside.",                                   type: "text",     label: "Newsletter Success Message" },
 
   // ── Shop Page ──────────────────────────────────────────────────────────
-  { key: "shop_title",                 value: "The Collection",                                   type: "text",     label: "Shop Page Heading" },
+  { key: "shop_title",                 value: "Collections",                                      type: "text",     label: "Shop Page Heading" },
   { key: "shop_subtitle",              value: "Rare ingredients. Masterful blending. Scents that become a second skin.", type: "text", label: "Shop Page Subtitle" },
   { key: "shop_banner_image",          value: "",                                                 type: "image",    label: "Shop Page Banner Image" },
 
@@ -155,6 +155,18 @@ export async function GET() {
   for (const def of DEFAULT_CONTENT) {
     if (!existingKeys.has(def.key)) {
       await prisma.siteContent.create({ data: def });
+    }
+  }
+
+  // One-time migrations: update old default values to new ones
+  const migrations: { key: string; from: string; to: string }[] = [
+    { key: "nav_link2_label", from: "Shop",           to: "Collections" },
+    { key: "shop_title",      from: "The Collection", to: "Collections" },
+  ];
+  for (const m of migrations) {
+    const rec = existing.find((e) => e.key === m.key);
+    if (rec && rec.value === m.from) {
+      await prisma.siteContent.update({ where: { key: m.key }, data: { value: m.to } });
     }
   }
 
