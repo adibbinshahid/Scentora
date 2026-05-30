@@ -151,6 +151,7 @@ export async function POST() {
     totalCreated += data.length;
   }
 
+  revalidateTag("products");
   revalidatePath("/products/[slug]", "page");
   revalidatePath("/shop", "page");
 
