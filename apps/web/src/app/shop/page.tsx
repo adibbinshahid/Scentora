@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getSiteContent();
   return {
-    title: content["shop_title"] ?? "The Collection",
+    title: content["shop_title"] ?? "Collections",
     description: content["shop_subtitle"] ?? "Explore the full Scentora collection. Rare ingredients, timeless luxury.",
   };
 }
@@ -128,7 +128,7 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
     params.family ||
     params.filter;
 
-  const shopTitle    = content["shop_title"]       ?? "The Collection";
+  const shopTitle    = content["shop_title"]       ?? "Collections";
   const shopSubtitle = content["shop_subtitle"]    ?? "";
   const bannerImage  = content["shop_banner_image"] ?? "";
   const categoryLabel = categories.find((c) => c.slug === params.category)?.name;
