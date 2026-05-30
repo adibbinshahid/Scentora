@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
-import { writeFile } from "fs/promises";
-import path from "path";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(req: NextRequest) {
   const { error } = await requireAdmin();
@@ -25,8 +29,15 @@ export async function POST(req: NextRequest) {
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  await writeFile(path.join(uploadsDir, filename), buffer);
+  const { error: uploadError } = await supabase.storage
+    .from("perfumes")
+    .upload(filename, buffer, { contentType: file.type, upsert: false });
 
-  return NextResponse.json({ url: `/uploads/${filename}` });
+  if (uploadError) {
+    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+  }
+
+  const { data } = supabase.storage.from("perfumes").getPublicUrl(filename);
+
+  return NextResponse.json({ url: data.publicUrl });
 }
