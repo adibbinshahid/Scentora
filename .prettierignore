@@ -1,0 +1,8 @@
+node_modules
+.next
+out
+build
+coverage
+payload.db
+src/payload/payload-types.ts
+src/app/(payload)/admin/importMap.js
