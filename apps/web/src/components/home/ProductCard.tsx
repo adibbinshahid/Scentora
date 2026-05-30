@@ -80,6 +80,7 @@ export default function ProductCard({
   const [mounted, setMounted] = useState(false);
   const [cartHovered, setCartHovered] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
+  const [failedImgs, setFailedImgs] = useState<Set<number>>(new Set());
   useEffect(() => setMounted(true), []);
   const wishlisted = mounted && hasItem(product.id);
 
@@ -175,7 +176,7 @@ export default function ProductCard({
             />
 
             {/* Product image or SP placeholder */}
-            {product.images[0] ? (
+            {product.images[0] && !failedImgs.has(imgIdx) ? (
               <>
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -191,6 +192,7 @@ export default function ProductCard({
                       alt={product.name}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                      onError={() => setFailedImgs((prev) => new Set([...prev, imgIdx]))}
                     />
                   </motion.div>
                 </AnimatePresence>
