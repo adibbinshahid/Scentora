@@ -2,14 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const config = {
+  api: { bodyParser: false },
+};
 
 export async function POST(req: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json(
+      { error: "Storage not configured — set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel env vars." },
+      { status: 500 }
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   const form = await req.formData();
   const file = form.get("file") as File | null;
