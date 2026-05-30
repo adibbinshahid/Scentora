@@ -237,6 +237,8 @@ export default function ContentPage() {
   const [dirty, setDirty]         = useState<Set<string>>(new Set());
   const [uploading, setUploading] = useState<string | null>(null);
   const [saving, setSaving]       = useState(false);
+  const [loading, setLoading]     = useState(true);
+  const [loadErr, setLoadErr]     = useState(false);
 
   /* Two-level open state: "Home Page" → Set{"Layer 1 — Hero Section", ...} */
   const [openPages, setOpenPages]       = useState<Set<string>>(new Set(["Home Page"]));
@@ -245,16 +247,24 @@ export default function ContentPage() {
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   async function load() {
-    const res = await fetch("/api/admin/content");
-    if (!res.ok) return;
-    const data: ContentItem[] = await res.json();
-    setItems(data);
-    const v: Record<string, string> = {};
-    const t: Record<string, string> = {};
-    const l: Record<string, string> = {};
-    data.forEach((d) => { v[d.key] = d.value; t[d.key] = d.type; l[d.key] = d.label ?? d.key; });
-    setValues(v); setTypes(t); setLabels(l);
-    setDirty(new Set());
+    setLoading(true);
+    setLoadErr(false);
+    try {
+      const res = await fetch("/api/admin/content");
+      if (!res.ok) { setLoadErr(true); return; }
+      const data: ContentItem[] = await res.json();
+      setItems(data);
+      const v: Record<string, string> = {};
+      const t: Record<string, string> = {};
+      const l: Record<string, string> = {};
+      data.forEach((d) => { v[d.key] = d.value; t[d.key] = d.type; l[d.key] = d.label ?? d.key; });
+      setValues(v); setTypes(t); setLabels(l);
+      setDirty(new Set());
+    } catch {
+      setLoadErr(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { load(); }, []);
@@ -496,9 +506,15 @@ export default function ContentPage() {
         )}
       </div>
 
-      {items.length === 0 && (
+      {loading && (
         <div className="glass-panel p-8 text-center text-text-muted text-sm">
           Loading content…
+        </div>
+      )}
+      {loadErr && !loading && (
+        <div className="glass-panel p-8 text-center text-sm" style={{ color: "rgba(220,80,80,0.9)", border: "1px solid rgba(220,80,80,0.25)" }}>
+          Failed to load content. Check your database connection, then{" "}
+          <button onClick={load} className="underline hover:opacity-80">retry</button>.
         </div>
       )}
 
@@ -506,7 +522,7 @@ export default function ContentPage() {
       <div className="space-y-3">
         {PAGES.map((pageDef) => {
           const allPageKeys  = pageDef.sections.flatMap((s) => s.keys);
-          const pageItems    = allPageKeys.filter((k) => values[k] !== undefined);
+          const pageItems    = allPageKeys;
           const pageDirtyCount = allPageKeys.filter((k) => dirty.has(k)).length;
           const pageOpen     = openPages.has(pageDef.page);
 
@@ -549,7 +565,7 @@ export default function ContentPage() {
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                   {pageDef.sections.map((sec) => {
                     const secDirty   = sec.keys.filter((k) => dirty.has(k)).length;
-                    const secFields  = sec.keys.filter((k) => values[k] !== undefined);
+                    const secFields  = sec.keys;
                     const secOpen    = openSections.has(sec.title);
 
                     return (
@@ -584,10 +600,7 @@ export default function ContentPage() {
                         {/* Fields */}
                         {secOpen && (
                           <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-                            {sec.keys.map((key) => {
-                              if (values[key] === undefined) return null;
-                              return renderField(key);
-                            })}
+                            {sec.keys.map((key) => renderField(key))}
                           </div>
                         )}
                       </div>
