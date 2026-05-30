@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import type { ContentMap } from "@/lib/content-helpers";
 import { c } from "@/lib/content-helpers";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 export default function Navbar({ content = {} }: { content?: ContentMap }) {
   const pathname = usePathname();
@@ -58,40 +59,59 @@ export default function Navbar({ content = {} }: { content?: ContentMap }) {
         boxShadow:              "0 1px 0 rgba(201,168,76,0.10), 0 4px 24px rgba(0,0,0,0.18)",
       }}
     >
-      {/* Inner pill — layout only, no backdrop-filter */}
-      <div className="max-w-7xl mx-auto px-6 py-1 flex items-center gap-4">
+      {/* 3-column grid: logo | nav | icons — nav stays centered regardless of icon width */}
+      <div
+        className="max-w-7xl mx-auto px-6 py-1"
+        style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: "1rem" }}
+      >
 
-        {/* Logo */}
-        <Link href="/" className="shrink-0 mr-2 py-2">
-          <Image
-            src="/logo.png"
-            alt={brandName}
-            width={190}
-            height={95}
-            className="object-contain w-[140px] sm:w-[190px]"
-            style={{
-              mixBlendMode: "screen",
-              filter: "brightness(1.6) saturate(1.2) drop-shadow(0 0 10px rgba(201,168,76,0.55))",
-            }}
-            priority
-          />
-        </Link>
-
-        {/* Nav links — center */}
-        <div className="hidden md:flex items-center gap-1 flex-1 justify-center">
-          {NAV_LINKS.map(({ href, label }) => (
-            <Link
-              key={label}
-              href={href}
-              className={`nav-link${isActive(href) ? " active" : ""}`}
-            >
-              {label}
-            </Link>
-          ))}
+        {/* Col 1: Logo — left-aligned */}
+        <div className="flex items-center">
+          <Link href="/" className="shrink-0 py-2">
+            <Image
+              src="/logo.png"
+              alt={brandName}
+              width={190}
+              height={95}
+              className="object-contain w-[140px] sm:w-[190px]"
+              style={{
+                mixBlendMode: "screen",
+                filter: "brightness(1.6) saturate(1.2) drop-shadow(0 0 10px rgba(201,168,76,0.55))",
+              }}
+              priority
+            />
+          </Link>
         </div>
 
-        {/* Right: search + icons */}
-        <div className="flex items-center gap-3 ml-auto">
+        {/* Col 2: Nav links — always centered */}
+        <div className="hidden md:flex items-center gap-1">
+          {NAV_LINKS.map(({ href, label }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={label}
+                href={href}
+                className={`nav-link relative${active ? " active" : ""}`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="nav-active-pill"
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{
+                      background: "linear-gradient(110deg, #C9A84C 0%, #E8D098 50%, #C9A84C 100%)",
+                      boxShadow: "0 0 20px rgba(201,168,76,0.55), 0 0 8px rgba(201,168,76,0.30), inset 0 1px 0 rgba(255,255,255,0.28)",
+                    }}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Col 3: Icons — right-aligned */}
+        <div className="flex items-center justify-end gap-3">
           <div className="hidden sm:flex items-center">
             {searchOpen ? (
               <form
