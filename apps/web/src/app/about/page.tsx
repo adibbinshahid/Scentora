@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 import { getSiteContent } from "@/lib/content";
 import NavbarServer from "@/components/NavbarServer";
 import FooterServer from "@/components/FooterServer";
