@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { Suspense } from "react";
-import { STATIC_PRODUCTS, STATIC_CATEGORIES } from "@/lib/static-catalog";
+import { prisma } from "db";
+import { parseJsonArray } from "@/lib/utils";
 import { getSiteContent } from "@/lib/content";
 import NavbarServer from "@/components/NavbarServer";
 import FooterServer from "@/components/FooterServer";
@@ -29,52 +30,87 @@ type SearchParams = Promise<{
   q?: string;
 }>;
 
-function getProducts(params: Awaited<SearchParams>): ProductCardData[] {
+async function getProducts(params: Awaited<SearchParams>): Promise<ProductCardData[]> {
   const { category, concentration, gender, family, filter, sort, q } = params;
 
-  let results = STATIC_PRODUCTS.filter((p) => {
-    if (!p.isActive) return false;
-    if (q && !p.name.toLowerCase().includes(q.toLowerCase()) && !p.slug.includes(q.toLowerCase())) return false;
-    if (category && p.categorySlug !== category) return false;
-    if (concentration && p.concentration !== concentration) return false;
-    if (gender && p.gender !== gender) return false;
-    if (family && p.family !== family) return false;
-    if (filter === "bestseller" && !p.isBestseller) return false;
-    if (filter === "featured" && !p.isFeatured) return false;
-    return true;
-  }) as ProductCardData[];
+  const products = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      ...(q && { name: { contains: q } }),
+      ...(category && { category: { slug: category } }),
+      ...(concentration && { concentration }),
+      ...(gender && { gender }),
+      ...(family && { family }),
+      ...(filter === "bestseller" && { isBestseller: true }),
+      ...(filter === "featured" && { isFeatured: true }),
+    },
+    include: {
+      variants: { orderBy: { price: "asc" } },
+    },
+    orderBy:
+      sort === "bestseller"
+        ? [{ isBestseller: "desc" }, { createdAt: "desc" }]
+        : { createdAt: "desc" },
+  });
+
+  const ids = products.map((p) => p.id);
+  const reviewStats = await prisma.review.groupBy({
+    by: ["productId"],
+    where: { productId: { in: ids } },
+    _avg: { rating: true },
+    _count: { id: true },
+  });
+  const statsMap = new Map(reviewStats.map((s) => [s.productId, { avg: s._avg.rating ?? 0, count: s._count.id }]));
+
+  const mapped: ProductCardData[] = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    concentration: p.concentration,
+    family: p.family,
+    gender: p.gender,
+    images: parseJsonArray(p.images),
+    variants: p.variants.map((v) => ({
+      id: v.id,
+      size: v.size,
+      price: v.price,
+      salePrice: v.salePrice,
+      stock: v.stock,
+      sku: v.sku,
+    })),
+    avgRating: statsMap.get(p.id)?.avg ?? 0,
+    reviewCount: statsMap.get(p.id)?.count ?? 0,
+  }));
 
   if (sort === "price-asc") {
-    results = [...results].sort(
+    return mapped.sort(
       (a, b) =>
         (a.variants[0]?.salePrice ?? a.variants[0]?.price ?? 0) -
         (b.variants[0]?.salePrice ?? b.variants[0]?.price ?? 0)
     );
-  } else if (sort === "price-desc") {
-    results = [...results].sort(
+  }
+  if (sort === "price-desc") {
+    return mapped.sort(
       (a, b) =>
         (b.variants[0]?.salePrice ?? b.variants[0]?.price ?? 0) -
         (a.variants[0]?.salePrice ?? a.variants[0]?.price ?? 0)
     );
-  } else if (sort === "bestseller") {
-    results = [...results].sort((a, b) => {
-      const aB = STATIC_PRODUCTS.find((p) => p.id === a.id)?.isBestseller ? 1 : 0;
-      const bB = STATIC_PRODUCTS.find((p) => p.id === b.id)?.isBestseller ? 1 : 0;
-      return bB - aB;
-    });
   }
 
-  return results;
+  return mapped;
+}
+
+async function getCategories() {
+  return prisma.category.findMany({ orderBy: { name: "asc" } });
 }
 
 export default async function ShopPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const [products, content] = await Promise.all([
-    Promise.resolve(getProducts(params)),
+  const [products, categories, content] = await Promise.all([
+    getProducts(params),
+    getCategories(),
     getSiteContent(),
   ]);
-
-  const categories = STATIC_CATEGORIES;
 
   const hasFilters =
     params.category ||
@@ -93,7 +129,6 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
     <>
       <NavbarServer />
       <main className="pt-20 min-h-screen">
-        {/* Page header */}
         <div
           className="relative border-b border-border-primary overflow-hidden"
           style={
@@ -127,7 +162,6 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
         </div>
 
         <div className="max-w-7xl mx-auto px-6 py-10">
-          {/* Top bar */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <Suspense><MobileFilterDrawer categories={categories} /></Suspense>
@@ -141,14 +175,12 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
           <Suspense><ActiveFilters /></Suspense>
 
           <div className="flex gap-10">
-            {/* Sidebar */}
             <div className="hidden lg:block w-52 shrink-0">
               <div className="sticky top-24">
                 <Suspense><FilterSidebar categories={categories} /></Suspense>
               </div>
             </div>
 
-            {/* Grid */}
             <div className="flex-1">
               {products.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 text-center">
