@@ -22,7 +22,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDP Intense", family: "Oriental Woody", gender: "UNISEX",
     categorySlug: "la-collection-noire", isFeatured: true, isBestseller: true, isActive: true,
     description: "Our signature masterpiece. An intoxicating, dark, opulent blend of raw spices, deep midnight rose, and rare agarwood wrapped in a liquid gold shroud.",
-    images: ["/images/products/scentora-1.jpg", "/images/products/scentora-2.jpg", "/images/products/scentora-3.jpg", "/images/products/scentora-4.jpg"],
+    images: [
+      "/uploads/1780128320379-jry88clw4o.webp",
+      "/uploads/1780128327373-ywg25dqv1ki.png",
+    ],
     variants: [
       { id: "SC-EDPI-50",  size: "50ml",  price: 185, salePrice: null, stock: 15, sku: "SC-EDPI-50"  },
       { id: "SC-EDPI-100", size: "100ml", price: 275, salePrice: null, stock: 8,  sku: "SC-EDPI-100" },
@@ -34,7 +37,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDP", family: "Floral Musk", gender: "FEMALE",
     categorySlug: "la-collection-blanche", isFeatured: true, isBestseller: false, isActive: true,
     description: "A luminous, clean, yet seductive floral-musk fragrance mimicking the crisp air of a sleepless night in Paris.",
-    images: ["/images/products/nuit-blanche-1.jpg", "/images/products/nuit-blanche-2.jpg", "/images/products/nuit-blanche-3.jpg", "/images/products/nuit-blanche-4.jpg"],
+    images: [
+      "/uploads/1780128388129-pdmwu7gs1jc.webp",
+      "/uploads/1780128393821-vo09pt1jht.png",
+    ],
     variants: [
       { id: "NB-EDP-50",  size: "50ml",  price: 160, salePrice: null, stock: 25, sku: "NB-EDP-50"  },
       { id: "NB-EDP-100", size: "100ml", price: 240, salePrice: null, stock: 3,  sku: "NB-EDP-100" },
@@ -46,7 +52,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDP Intense", family: "Woody Spiced", gender: "UNISEX",
     categorySlug: "la-collection-noire", isFeatured: false, isBestseller: true, isActive: true,
     description: "An intense, rich, woody-spiced tribute to the sacred resin. Smoke, dark woods, and sweet resins.",
-    images: ["/images/products/oud-mystique-1.jpg", "/images/products/oud-mystique-2.jpg", "/images/products/oud-mystique-3.jpg", "/images/products/oud-mystique-4.jpg"],
+    images: [
+      "/uploads/1780128473728-o7aischxelm.webp",
+      "/uploads/1780128486209-qpkdjb7jny.png",
+    ],
     variants: [
       { id: "OM-EDPI-50",  size: "50ml",  price: 195, salePrice: null, stock: 12, sku: "OM-EDPI-50"  },
       { id: "OM-EDPI-100", size: "100ml", price: 295, salePrice: null, stock: 18, sku: "OM-EDPI-100" },
@@ -58,7 +67,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDT", family: "Citrus Aromatic", gender: "UNISEX",
     categorySlug: "la-collection-blanche", isFeatured: false, isBestseller: false, isActive: true,
     description: "An ultra-bright, sparkling citrus aromatic scent that bursts with lemon verbena, fresh grapefruit, and cooling mint.",
-    images: ["/images/products/verveine-celeste-1.jpg", "/images/products/verveine-celeste-2.jpg", "/images/products/verveine-celeste-3.jpg", "/images/products/verveine-celeste-4.jpg"],
+    images: [
+      "/uploads/1780130318504-7ng5316dne.webp",
+      "/uploads/1780130324441-4dry62iab5m.png",
+    ],
     variants: [
       { id: "VC-EDT-50",  size: "50ml",  price: 140, salePrice: null, stock: 30, sku: "VC-EDT-50"  },
       { id: "VC-EDT-100", size: "100ml", price: 210, salePrice: null, stock: 22, sku: "VC-EDT-100" },
@@ -70,7 +82,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDP", family: "Leather Oriental", gender: "MALE",
     categorySlug: "la-collection-noire", isFeatured: true, isBestseller: true, isActive: true,
     description: "A commanding leather oriental fragrance that contrasts sweet raspberry with smoky birchwood, black suede, and rich amber.",
-    images: ["/images/products/cuir-imperial-1.jpg", "/images/products/cuir-imperial-2.jpg", "/images/products/cuir-imperial-3.jpg", "/images/products/cuir-imperial-4.jpg"],
+    images: [
+      "/uploads/1780130406470-se8gel8ze5l.webp",
+      "/uploads/1780130413673-wi27y8xvsol.png",
+    ],
     variants: [
       { id: "CI-EDP-50",  size: "50ml",  price: 190, salePrice: null, stock: 4,  sku: "CI-EDP-50"  },
       { id: "CI-EDP-100", size: "100ml", price: 280, salePrice: null, stock: 14, sku: "CI-EDP-100" },
@@ -82,7 +97,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDP", family: "Floral Spiced", gender: "FEMALE",
     categorySlug: "la-collection-blanche", isFeatured: false, isBestseller: true, isActive: true,
     description: "A rich, majestic floral spiced tribute to the Turkish rose, warmed by pink pepper and balanced by green papyrus.",
-    images: ["/images/products/rose-imperiale-1.jpg", "/images/products/rose-imperiale-2.jpg", "/images/products/rose-imperiale-3.jpg", "/images/products/rose-imperiale-4.jpg"],
+    images: [
+      "/uploads/1780130523408-jyx3l9jelnr.webp",
+      "/uploads/1780130530056-ni8nc1gyq3m.png",
+    ],
     variants: [
       { id: "RI-EDP-50",  size: "50ml",  price: 175, salePrice: null, stock: 15, sku: "RI-EDP-50"  },
       { id: "RI-EDP-100", size: "100ml", price: 260, salePrice: null, stock: 10, sku: "RI-EDP-100" },
@@ -94,7 +112,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDT", family: "Woody Aromatic", gender: "MALE",
     categorySlug: "la-collection-dor", isFeatured: false, isBestseller: false, isActive: true,
     description: "A sophisticated earthy-woody fragrance showing the warm, golden side of Haitian vetiver with grapefruit, flint, and cedar.",
-    images: ["/images/products/vetiver-dore-1.jpg", "/images/products/vetiver-dore-2.jpg", "/images/products/vetiver-dore-3.jpg", "/images/products/vetiver-dore-4.jpg"],
+    images: [
+      "/uploads/1780130606028-lxh1xow111.webp",
+      "/uploads/1780130609970-tuq9y0l2r4f.png",
+    ],
     variants: [
       { id: "VD-EDT-50",  size: "50ml",  price: 150, salePrice: null, stock: 20, sku: "VD-EDT-50"  },
       { id: "VD-EDT-100", size: "100ml", price: 225, salePrice: null, stock: 15, sku: "VD-EDT-100" },
@@ -106,7 +127,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDP", family: "Amber Balsamic", gender: "UNISEX",
     categorySlug: "la-collection-dor", isFeatured: true, isBestseller: false, isActive: true,
     description: "A rich, resinous amber perfume featuring dense vanilla, dry labdanum, benzoin, and warm spices.",
-    images: ["/images/products/ambre-extreme-1.jpg", "/images/products/ambre-extreme-2.jpg", "/images/products/ambre-extreme-3.jpg", "/images/products/ambre-extreme-4.jpg"],
+    images: [
+      "/uploads/1780130703285-5e6p3cgcvp.webp",
+      "/uploads/1780130776325-6l81iwx0hrc.png",
+    ],
     variants: [
       { id: "AE-EDP-50",  size: "50ml",  price: 170, salePrice: null, stock: 0,  sku: "AE-EDP-50"  },
       { id: "AE-EDP-100", size: "100ml", price: 255, salePrice: null, stock: 12, sku: "AE-EDP-100" },
@@ -118,7 +142,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDP", family: "Woody Creamy", gender: "UNISEX",
     categorySlug: "la-collection-dor", isFeatured: false, isBestseller: false, isActive: true,
     description: "A creamy, comforting woody fragrance that infuses cardamom and coconut milk with powdery iris and Australian sandalwood.",
-    images: ["/images/products/santal-nectar-1.jpg", "/images/products/santal-nectar-2.jpg", "/images/products/santal-nectar-3.jpg", "/images/products/santal-nectar-4.jpg"],
+    images: [
+      "/uploads/1780124838974-gvnrx5qberv.webp",
+      "/uploads/1780139409321-tk77ahri6sa.webp",
+    ],
     variants: [
       { id: "SN-EDP-50",  size: "50ml",  price: 165, salePrice: null, stock: 14, sku: "SN-EDP-50"  },
       { id: "SN-EDP-100", size: "100ml", price: 245, salePrice: null, stock: 9,  sku: "SN-EDP-100" },
@@ -130,7 +157,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDP Intense", family: "Smoky Balsamic", gender: "UNISEX",
     categorySlug: "la-collection-noire", isFeatured: false, isBestseller: false, isActive: true,
     description: "A dark, smoky, spiritual scent combining high-grade frankincense with patchouli, dark leather, and myrrh.",
-    images: ["/images/products/encens-sacre-1.jpg", "/images/products/encens-sacre-2.jpg", "/images/products/encens-sacre-3.jpg", "/images/products/encens-sacre-4.jpg"],
+    images: [
+      "/uploads/1779782628241-qstdmz3sw0g.png",
+      "/uploads/1779782632465-irsuymrdgw.png",
+    ],
     variants: [
       { id: "ES-EDPI-50",  size: "50ml",  price: 180, salePrice: null, stock: 16, sku: "ES-EDPI-50"  },
       { id: "ES-EDPI-100", size: "100ml", price: 270, salePrice: null, stock: 7,  sku: "ES-EDPI-100" },
@@ -142,7 +172,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDT", family: "Marine Aromatic", gender: "UNISEX",
     categorySlug: "la-collection-blanche", isFeatured: false, isBestseller: false, isActive: true,
     description: "A crisp marine scent of sea salt, coastal herbs, driftwood, and warm beach sand.",
-    images: ["/images/products/fleur-de-sel-1.jpg", "/images/products/fleur-de-sel-2.jpg", "/images/products/fleur-de-sel-3.jpg", "/images/products/fleur-de-sel-4.jpg"],
+    images: [
+      "/uploads/1779778073542-9olg0betppu.png",
+      "/uploads/1779780188392-sdrxv92pb2.png",
+    ],
     variants: [
       { id: "FS-EDT-50",  size: "50ml",  price: 145, salePrice: null, stock: 18, sku: "FS-EDT-50"  },
       { id: "FS-EDT-100", size: "100ml", price: 215, salePrice: null, stock: 10, sku: "FS-EDT-100" },
@@ -154,7 +187,10 @@ export const STATIC_PRODUCTS: StaticProduct[] = [
     concentration: "EDP", family: "Solar Floral", gender: "FEMALE",
     categorySlug: "la-collection-dor", isFeatured: true, isBestseller: false, isActive: true,
     description: "A warm, sun-kissed citrus floral scent wrapping ylang-ylang and tiare flowers in solar amber and sweet coconut.",
-    images: ["/images/products/soleil-dor-1.jpg", "/images/products/soleil-dor-2.jpg", "/images/products/soleil-dor-3.jpg", "/images/products/soleil-dor-4.jpg"],
+    images: [
+      "/uploads/1779721644678-jofrmjhwgg9.jpeg",
+      "/uploads/1779722712384-hn0m5r7n91r.png",
+    ],
     variants: [
       { id: "SO-EDP-50",  size: "50ml",  price: 155, salePrice: null, stock: 15, sku: "SO-EDP-50"  },
       { id: "SO-EDP-100", size: "100ml", price: 230, salePrice: null, stock: 8,  sku: "SO-EDP-100" },
