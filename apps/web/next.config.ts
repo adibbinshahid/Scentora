@@ -4,10 +4,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Bundle the SQLite file into Vercel serverless function output
-  outputFileTracingIncludes: {
-    "/**": ["../../packages/db/prisma/dev.db"],
-  },
+  // Keep db/prisma packages server-side only — never bundled into client JS
+  serverExternalPackages: ["@prisma/client", "prisma", "bcryptjs", "db"],
   experimental: {
     serverActions: {
       bodySizeLimit: "20mb",
