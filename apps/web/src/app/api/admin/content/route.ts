@@ -158,17 +158,21 @@ export async function GET() {
     }
   }
 
-  // One-time migrations: update old default values to new ones
-  const migrations: { key: string; from: string; to: string }[] = [
-    { key: "nav_link2_label", from: "Shop",           to: "Collections" },
-    { key: "shop_title",      from: "The Collection", to: "Collections" },
+  // Forced migrations: overwrite specific keys regardless of current value
+  const forcedUpdates: { key: string; value: string }[] = [
+    { key: "nav_link2_label", value: "Collections" },
+    { key: "shop_title",      value: "Collections" },
   ];
-  for (const m of migrations) {
-    const rec = existing.find((e) => e.key === m.key);
-    if (rec && rec.value === m.from) {
-      await prisma.siteContent.update({ where: { key: m.key }, data: { value: m.to } });
-    }
+  for (const u of forcedUpdates) {
+    await prisma.siteContent.upsert({
+      where: { key: u.key },
+      update: { value: u.value },
+      create: { key: u.key, value: u.value },
+    });
   }
+  revalidateTag("content");
+  revalidatePath("/", "page");
+  revalidatePath("/shop", "page");
 
   const all = await prisma.siteContent.findMany({ orderBy: { key: "asc" } });
   return NextResponse.json(all);

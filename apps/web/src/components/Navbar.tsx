@@ -22,7 +22,7 @@ export default function Navbar({ content = {} }: { content?: ContentMap }) {
 
   const NAV_LINKS = [
     { href: c(content, "nav_link1_href", "/"),      label: c(content, "nav_link1_label", "Home")     },
-    { href: c(content, "nav_link2_href", "/shop"),  label: c(content, "nav_link2_label", "Shop")     },
+    { href: c(content, "nav_link2_href", "/shop"),  label: c(content, "nav_link2_label", "Collections") },
     { href: c(content, "nav_link3_href", "/about"), label: c(content, "nav_link3_label", "About Us") },
   ];
   const [searchOpen, setSearchOpen] = useState(false);
