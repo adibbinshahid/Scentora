@@ -301,18 +301,32 @@ export default function ContentPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(key);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-    setUploading(null);
-    const data = await res.json();
-    if (res.ok) {
-      handleChange(key, data.url);
+    try {
+      // Step 1: get signed upload URL (small JSON — stays within Vercel limit)
+      const urlRes = await fetch("/api/admin/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type }),
+      });
+      const urlData = await urlRes.json().catch(() => ({}));
+      if (!urlRes.ok) { toast.error(urlData.error ?? "Upload failed."); return; }
+
+      // Step 2: upload file directly to Supabase (bypasses Vercel 4.5 MB body limit)
+      const uploadRes = await fetch(urlData.signedUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+      if (!uploadRes.ok) { toast.error("Upload failed."); return; }
+
+      handleChange(key, urlData.publicUrl);
       toast.success("Uploaded. Save to apply.");
-    } else {
-      toast.error(data.error ?? "Upload failed.");
+    } catch {
+      toast.error("Upload failed.");
+    } finally {
+      setUploading(null);
+      if (fileRefs.current[key]) fileRefs.current[key]!.value = "";
     }
-    if (fileRefs.current[key]) fileRefs.current[key]!.value = "";
   }
 
   function togglePage(page: string) {

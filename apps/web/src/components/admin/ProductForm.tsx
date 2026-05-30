@@ -102,19 +102,30 @@ export default function ProductForm({
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingImage(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-    setUploadingImage(false);
-    if (res.ok) {
-      const { url } = await res.json();
-      set("images", [...form.images, url]);
+    try {
+      const urlRes = await fetch("/api/admin/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type }),
+      });
+      const urlData = await urlRes.json().catch(() => ({}));
+      if (!urlRes.ok) { toast.error(urlData.error ?? "Upload failed"); return; }
+
+      const uploadRes = await fetch(urlData.signedUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+      if (!uploadRes.ok) { toast.error("Upload failed"); return; }
+
+      set("images", [...form.images, urlData.publicUrl]);
       toast.success("Image uploaded");
-    } else {
-      const d = await res.json().catch(() => ({}));
-      toast.error(d.error ?? "Upload failed");
+    } catch {
+      toast.error("Upload failed");
+    } finally {
+      setUploadingImage(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
-    if (fileRef.current) fileRef.current.value = "";
   }
 
   function removeImage(idx: number) {
