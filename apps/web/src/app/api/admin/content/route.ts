@@ -171,8 +171,7 @@ export async function GET() {
     });
   }
   revalidateTag("content");
-  revalidatePath("/", "page");
-  revalidatePath("/shop", "page");
+  revalidatePath("/", "layout");
 
   const all = await prisma.siteContent.findMany({ orderBy: { key: "asc" } });
   return NextResponse.json(all);
@@ -200,9 +199,7 @@ export async function PATCH(req: NextRequest) {
   });
 
   revalidateTag("content");
-  revalidatePath("/", "page");
-  revalidatePath("/about", "page");
-  revalidatePath("/shop", "page");
+  revalidatePath("/", "layout");
 
   return NextResponse.json(item);
 }
