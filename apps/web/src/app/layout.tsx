@@ -35,6 +35,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${cormorant.variable} ${raleway.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full bg-bg-primary text-text-primary font-sans flex flex-col" style={{ paddingTop: "var(--banner-h)" }} suppressHydrationWarning>
         {/* Demo banner */}
