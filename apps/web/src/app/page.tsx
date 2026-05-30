@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "db";
 import { parseJsonArray } from "@/lib/utils";
 import { getSiteContent } from "@/lib/content";

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { auth } from "@/lib/auth";
 import { prisma } from "db";
 import { formatPrice } from "@/lib/utils";

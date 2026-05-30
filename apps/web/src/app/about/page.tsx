@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getSiteContent } from "@/lib/content";
 import NavbarServer from "@/components/NavbarServer";
 import FooterServer from "@/components/FooterServer";
