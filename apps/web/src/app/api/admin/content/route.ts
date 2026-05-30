@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { requireAdmin, requireAdminRead } from "@/lib/admin";
 import { prisma } from "db";
 import { z } from "zod";
@@ -184,6 +184,9 @@ export async function PATCH(req: NextRequest) {
   });
 
   revalidateTag("content");
+  revalidatePath("/", "page");
+  revalidatePath("/about", "page");
+  revalidatePath("/shop", "page");
 
   return NextResponse.json(item);
 }
