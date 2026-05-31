@@ -138,40 +138,8 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
     <>
       <NavbarServer />
       <main className="pt-20 min-h-screen">
-        <div
-          className="relative border-b border-border-primary overflow-hidden"
-          style={
-            bannerImage
-              ? { backgroundImage: `url(${bannerImage})`, backgroundSize: "cover", backgroundPosition: "center" }
-              : undefined
-          }
-        >
-          {bannerImage && (
-            <div
-              className="absolute inset-0"
-              style={{ background: "linear-gradient(to right, rgba(10,9,7,0.90) 0%, rgba(10,9,7,0.60) 100%)" }}
-            />
-          )}
-          <div className="relative z-10 max-w-7xl mx-auto px-6 py-10">
-            <span className="block text-[10px] tracking-[0.4em] uppercase text-gold-primary mb-2">
-              {hasFilters ? "Filtered Results" : "Explore"}
-            </span>
-            <h1
-              className="font-display font-light text-4xl sm:text-5xl text-text-primary"
-              style={{ letterSpacing: "0.06em" }}
-            >
-              {heading}
-            </h1>
-            {shopSubtitle && !hasFilters && (
-              <p className="text-text-muted text-sm mt-2 max-w-lg leading-relaxed">
-                {shopSubtitle}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 py-10">
-          <div className="flex items-center justify-between mb-8">
+        <div className="max-w-7xl mx-auto px-6 pt-4 pb-10">
+          <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-4">
               <Suspense><MobileFilterDrawer categories={categories} /></Suspense>
               <span className="text-sm text-text-muted">

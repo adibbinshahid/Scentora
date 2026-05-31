@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Upload, X, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Upload, X, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
 import { parseJsonArray } from "@/lib/utils";
 
@@ -85,6 +85,18 @@ export default function ProductForm({
 
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (lightboxIdx === null) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setLightboxIdx(null);
+      if (e.key === "ArrowRight") setLightboxIdx((i) => i === null ? null : (i + 1) % form.images.length);
+      if (e.key === "ArrowLeft") setLightboxIdx((i) => i === null ? null : (i - 1 + form.images.length) % form.images.length);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxIdx, form.images.length]);
 
   function set(field: keyof ProductData, value: unknown) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -307,7 +319,12 @@ export default function ProductForm({
         <div className="flex flex-wrap gap-3 mb-4">
           {form.images.map((img, i) => (
             <div key={i} className="relative group w-24 h-32 bg-bg-tertiary border border-border-primary overflow-hidden">
-              <img src={img} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }} />
+              <img
+                src={img} alt=""
+                className="w-full h-full object-cover cursor-zoom-in"
+                onClick={() => setLightboxIdx(i)}
+                onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }}
+              />
               <button
                 onClick={() => removeImage(i)}
                 className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -318,6 +335,51 @@ export default function ProductForm({
             </div>
           ))}
         </div>
+
+        {/* Lightbox */}
+        {lightboxIdx !== null && (
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.92)" }}
+            onClick={() => setLightboxIdx(null)}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightboxIdx(null); }}
+              className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full text-white"
+              style={{ background: "rgba(255,255,255,0.1)" }}
+            >
+              <X size={16} />
+            </button>
+            {form.images.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx - 1 + form.images.length) % form.images.length); }}
+                  className="absolute left-4 w-9 h-9 flex items-center justify-center rounded-full text-white"
+                  style={{ background: "rgba(255,255,255,0.1)" }}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx + 1) % form.images.length); }}
+                  className="absolute right-14 w-9 h-9 flex items-center justify-center rounded-full text-white"
+                  style={{ background: "rgba(255,255,255,0.1)" }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </>
+            )}
+            <img
+              src={form.images[lightboxIdx]}
+              alt=""
+              className="max-h-[85vh] max-w-[85vw] object-contain"
+              style={{ boxShadow: "0 0 60px rgba(0,0,0,0.8)" }}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="absolute bottom-4 text-[10px] tracking-widest uppercase text-white/40">
+              {lightboxIdx + 1} / {form.images.length} — Esc to close
+            </div>
+          </div>
+        )}
         <div className="flex gap-3 flex-wrap">
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           <button

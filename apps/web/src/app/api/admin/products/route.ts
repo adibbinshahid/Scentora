@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin, requireAdminRead } from "@/lib/admin";
 import { prisma } from "db";
 import { z } from "zod";
@@ -86,6 +87,10 @@ export async function POST(req: NextRequest) {
       },
     },
   });
+
+  revalidateTag("products");
+  revalidatePath("/", "page");
+  revalidatePath("/shop", "page");
 
   return NextResponse.json(product, { status: 201 });
 }

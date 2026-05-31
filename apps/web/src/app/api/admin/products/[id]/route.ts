@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin, requireAdminRead } from "@/lib/admin";
 import { prisma } from "db";
 import { z } from "zod";
@@ -98,7 +98,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Params }) {
     include: { variants: { orderBy: { price: "asc" } } },
   });
 
-  revalidatePath("/shop");
+  revalidateTag("products");
+  revalidatePath("/", "page");
+  revalidatePath("/shop", "page");
   revalidatePath("/products/[slug]", "page");
 
   return NextResponse.json(updated);
@@ -118,7 +120,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Params }) 
     );
   }
 
+  revalidateTag("products");
+  revalidatePath("/", "page");
   revalidatePath("/admin/products");
-  revalidatePath("/shop");
+  revalidatePath("/shop", "page");
   return NextResponse.json({ success: true });
 }
