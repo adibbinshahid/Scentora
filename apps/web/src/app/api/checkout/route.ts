@@ -101,7 +101,53 @@ export async function POST(req: NextRequest) {
   const total = taxableAmount + shippingCost + tax;
   const totalCents = Math.round(total * 100);
 
-  // Create Stripe Payment Intent
+  const isDemo = !process.env.STRIPE_SECRET_KEY ||
+    process.env.STRIPE_SECRET_KEY.includes("placeholder") ||
+    process.env.STRIPE_SECRET_KEY.startsWith("sk_test_placeholder");
+
+  const orderData = {
+    orderNumber: generateOrderNumber(),
+    userId: session?.user ? (session.user as any).id : undefined,
+    guestEmail: session?.user ? undefined : email,
+    subtotal,
+    discountAmount,
+    shippingCost,
+    tax,
+    total,
+    couponCode: validatedCouponCode,
+    shippingAddress: JSON.stringify(shippingAddress),
+    billingAddress: JSON.stringify(billingAddress),
+    items: {
+      create: cartItems.map((item) => {
+        const v = variants.find((v) => v.id === item.variantId)!;
+        return {
+          variantId: v.id,
+          productName: v.product.name,
+          variantSize: v.size,
+          price: v.salePrice ?? v.price,
+          quantity: item.quantity,
+        };
+      }),
+    },
+  };
+
+  if (isDemo) {
+    // Demo mode — skip Stripe, create order as PAID directly
+    const order = await prisma.order.create({
+      data: { ...orderData, status: "PAID" },
+    });
+
+    if (validatedCouponCode) {
+      await prisma.coupon.update({
+        where: { code: validatedCouponCode },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
+
+    return NextResponse.json({ orderNumber: order.orderNumber, demo: true });
+  }
+
+  // Real Stripe flow
   let paymentIntent: Stripe.PaymentIntent;
   try {
     paymentIntent = await stripe.paymentIntents.create({
@@ -115,38 +161,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payment service unavailable." }, { status: 502 });
   }
 
-  // Create pending order in DB
   const order = await prisma.order.create({
-    data: {
-      orderNumber: generateOrderNumber(),
-      userId: session?.user ? (session.user as any).id : undefined,
-      guestEmail: session?.user ? undefined : email,
-      status: "PENDING",
-      subtotal,
-      discountAmount,
-      shippingCost,
-      tax,
-      total,
-      couponCode: validatedCouponCode,
-      stripePaymentId: paymentIntent.id,
-      shippingAddress: JSON.stringify(shippingAddress),
-      billingAddress: JSON.stringify(billingAddress),
-      items: {
-        create: cartItems.map((item) => {
-          const v = variants.find((v) => v.id === item.variantId)!;
-          return {
-            variantId: v.id,
-            productName: v.product.name,
-            variantSize: v.size,
-            price: v.salePrice ?? v.price,
-            quantity: item.quantity,
-          };
-        }),
-      },
-    },
+    data: { ...orderData, status: "PENDING", stripePaymentId: paymentIntent.id },
   });
 
-  // Increment coupon usage
   if (validatedCouponCode) {
     await prisma.coupon.update({
       where: { code: validatedCouponCode },

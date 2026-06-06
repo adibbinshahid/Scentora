@@ -3,12 +3,13 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CheckCircle, ArrowRight, Package } from "lucide-react";
+import { CheckCircle, ArrowRight, Package, Info } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 export default function SuccessContent() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("order");
+  const isDemo = searchParams.get("demo") === "1";
   const { data: session } = useSession();
 
   return (
@@ -47,7 +48,7 @@ export default function SuccessContent() {
           </div>
         )}
 
-        <p className="text-sm text-text-muted mb-10">
+        <p className="text-sm text-text-muted mb-6">
           A confirmation email will be sent to you shortly.
           {session && (
             <> Track your order in{" "}
@@ -57,6 +58,27 @@ export default function SuccessContent() {
             </>
           )}
         </p>
+
+        {isDemo && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mb-8 p-4 rounded-lg text-left space-y-1.5"
+            style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.22)" }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Info size={13} className="text-gold-primary shrink-0" />
+              <span className="text-[10px] tracking-[0.2em] uppercase text-gold-primary font-semibold">Demo Website</span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              This is an AI-powered demo site created by ADIB for demonstration purposes. No product will be shipped and no payment was charged.
+            </p>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Your order details have been saved to the admin panel, and in a real deployment a confirmation email would be dispatched automatically.
+            </p>
+          </motion.div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link

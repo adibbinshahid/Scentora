@@ -168,6 +168,7 @@ export default function CheckoutPage() {
 
   const [clientSecret, setClientSecret] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
+  const [isDemo, setIsDemo] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -203,8 +204,12 @@ export default function CheckoutPage() {
       return;
     }
 
-    setClientSecret(data.clientSecret);
     setOrderNumber(data.orderNumber);
+    if (data.demo) {
+      setIsDemo(true);
+    } else {
+      setClientSecret(data.clientSecret);
+    }
     setStep("payment");
   }
 
@@ -310,18 +315,12 @@ export default function CheckoutPage() {
 
                   <button
                     type="submit"
-                    disabled={submitting || !stripePromise}
+                    disabled={submitting}
                     className="w-full flex items-center justify-center gap-2 py-4 text-[11px] tracking-[0.25em] uppercase bg-gold-primary text-bg-primary hover:bg-gold-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {submitting ? "Please wait…" : "Continue to Payment"}
                     {!submitting && <ArrowRight size={13} />}
                   </button>
-
-                  {!stripePromise && (
-                    <p className="text-center text-xs text-amber-400">
-                      Add Stripe keys to .env to enable payment.
-                    </p>
-                  )}
                 </form>
               ) : (
                 <div className="space-y-6">
@@ -333,7 +332,12 @@ export default function CheckoutPage() {
                     Edit details
                   </button>
 
-                  {stripePromise && clientSecret ? (
+                  {isDemo ? (
+                    <DemoPaymentStep orderNumber={orderNumber} onConfirm={() => {
+                      clearCart();
+                      router.push(`/checkout/success?order=${orderNumber}&demo=1`);
+                    }} />
+                  ) : stripePromise && clientSecret ? (
                     <Elements stripe={stripePromise} options={stripeOptions}>
                       <PaymentForm orderNumber={orderNumber} onSuccess={() => {}} />
                     </Elements>
@@ -411,6 +415,56 @@ export default function CheckoutPage() {
         </div>
       </div>
     </>
+  );
+}
+
+function DemoPaymentStep({ orderNumber, onConfirm }: { orderNumber: string; onConfirm: () => void }) {
+  return (
+    <div className="space-y-6">
+      {/* Demo notice */}
+      <div
+        className="p-5 rounded-lg space-y-2"
+        style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.25)" }}
+      >
+        <p className="text-[10px] tracking-[0.25em] uppercase text-gold-primary font-semibold">
+          Demo Website Notice
+        </p>
+        <p className="text-sm text-text-secondary leading-relaxed">
+          This is an AI-powered demonstration website by ADIB. No real payment will be charged and no product will be shipped.
+        </p>
+        <p className="text-sm text-text-secondary leading-relaxed">
+          Your order <span className="text-gold-primary font-medium">{orderNumber}</span> has been saved to the admin panel and a confirmation email notification would be sent in a real deployment.
+        </p>
+      </div>
+
+      {/* Fake card UI for realism */}
+      <div
+        className="p-5 rounded-lg space-y-4"
+        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+      >
+        <p className="text-[10px] tracking-[0.2em] uppercase text-text-muted">Card Details (Demo)</p>
+        <div className="space-y-3">
+          <input
+            readOnly
+            defaultValue="4242 4242 4242 4242"
+            className="w-full bg-bg-tertiary border border-border-primary text-text-muted text-sm px-4 py-3 outline-none cursor-not-allowed"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <input readOnly defaultValue="12/99" className="w-full bg-bg-tertiary border border-border-primary text-text-muted text-sm px-4 py-3 outline-none cursor-not-allowed" />
+            <input readOnly defaultValue="999" className="w-full bg-bg-tertiary border border-border-primary text-text-muted text-sm px-4 py-3 outline-none cursor-not-allowed" />
+          </div>
+        </div>
+        <p className="text-[10px] text-text-muted/60">Test card — no real transaction occurs</p>
+      </div>
+
+      <button
+        onClick={onConfirm}
+        className="w-full flex items-center justify-center gap-2 py-4 text-[11px] tracking-[0.25em] uppercase bg-gold-primary text-bg-primary hover:bg-gold-light transition-colors"
+      >
+        <Lock size={13} />
+        Complete Demo Order
+      </button>
+    </div>
   );
 }
 
