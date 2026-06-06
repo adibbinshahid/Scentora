@@ -20,16 +20,21 @@ export default function FeaturedSection({
   const isCarousel = products.length > 4;
   const track      = isCarousel ? [...products, ...products] : products;
   const loopWidth  = products.length * (CARD_W + GAP);
-  const duration   = products.length * 3.5;           // total loop seconds
+  const duration   = products.length * 5;              // total loop seconds
   const autoSpeed  = loopWidth / (duration * 60);     // px per 60fps frame
 
   // ── RAF carousel refs ──
-  const trackRef   = useRef<HTMLDivElement>(null);
-  const wrapRef    = useRef<HTMLDivElement>(null);
-  const posRef     = useRef(0);       // current translateX (negative)
-  const userVel    = useRef(0);       // user-injected velocity (friction-decayed)
-  const hovered    = useRef(false);   // pause auto-scroll on hover
-  const rafId      = useRef(0);
+  const trackRef    = useRef<HTMLDivElement>(null);
+  const wrapRef     = useRef<HTMLDivElement>(null);
+  const posRef      = useRef(0);
+  const userVel     = useRef(0);
+  const hovered     = useRef(false);
+  const rafId       = useRef(0);
+  // mouse/touch drag
+  const dragActive  = useRef(false);
+  const dragStartX  = useRef(0);
+  const dragLastX   = useRef(0);
+  const wasDragged  = useRef(false);  // true if pointer moved > 5px → suppress link click
 
   // tickRef pattern: always fresh values, no stale closures
   const tickRef = useRef<() => void>(() => {});
@@ -53,6 +58,69 @@ export default function FeaturedSection({
     if (!isCarousel) return;
     rafId.current = requestAnimationFrame(tickRef.current);
     return () => cancelAnimationFrame(rafId.current);
+  }, [isCarousel]);
+
+  // mouse drag → velocity injection
+  useEffect(() => {
+    if (!isCarousel) return;
+    const el = wrapRef.current;
+    if (!el) return;
+
+    function onMouseDown(e: MouseEvent) {
+      e.preventDefault(); // suppress native link/image drag so mousemove stays ours
+      dragActive.current = true;
+      wasDragged.current = false;
+      dragStartX.current = e.clientX;
+      dragLastX.current  = e.clientX;
+      hovered.current    = true;
+    }
+    function onMouseMove(e: MouseEvent) {
+      if (!dragActive.current) return;
+      const dx = e.clientX - dragLastX.current;
+      dragLastX.current = e.clientX;
+      userVel.current -= dx * 0.3;
+      if (Math.abs(e.clientX - dragStartX.current) > 5) wasDragged.current = true;
+    }
+    function onMouseUp() {
+      dragActive.current = false;
+      // keep hovered=true briefly so auto-scroll doesn't snap back immediately
+      setTimeout(() => { hovered.current = false; }, 60);
+    }
+    function onMouseLeaveDoc() { dragActive.current = false; hovered.current = false; }
+
+    // touch
+    function onTouchStart(e: TouchEvent) {
+      dragActive.current = true;
+      wasDragged.current = false;
+      dragStartX.current = e.touches[0].clientX;
+      dragLastX.current  = e.touches[0].clientX;
+      hovered.current    = true;
+    }
+    function onTouchMove(e: TouchEvent) {
+      if (!dragActive.current) return;
+      const dx = e.touches[0].clientX - dragLastX.current;
+      dragLastX.current = e.touches[0].clientX;
+      userVel.current -= dx * 0.3;
+      if (Math.abs(e.touches[0].clientX - dragStartX.current) > 5) wasDragged.current = true;
+    }
+    function onTouchEnd() { dragActive.current = false; hovered.current = false; }
+
+    el.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("mouseleave", onMouseLeaveDoc);
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove",  onTouchMove,  { passive: true });
+    el.addEventListener("touchend",   onTouchEnd);
+    return () => {
+      el.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("mouseleave", onMouseLeaveDoc);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove",  onTouchMove);
+      el.removeEventListener("touchend",   onTouchEnd);
+    };
   }, [isCarousel]);
 
   // wheel → velocity injection
@@ -112,8 +180,8 @@ export default function FeaturedSection({
             <div
               ref={wrapRef}
               className="overflow-hidden cursor-grab active:cursor-grabbing select-none"
-              onMouseEnter={() => { hovered.current = true; }}
-              onMouseLeave={() => { hovered.current = false; }}
+              onMouseEnter={() => { if (!dragActive.current) hovered.current = true; }}
+              onMouseLeave={() => { if (!dragActive.current) hovered.current = false; }}
             >
               <div
                 ref={trackRef}
@@ -121,7 +189,13 @@ export default function FeaturedSection({
                 style={{ gap: GAP, width: track.length * (CARD_W + GAP) }}
               >
                 {track.map((product, i) => (
-                  <div key={`${product.id}-${i}`} style={{ width: CARD_W, flexShrink: 0 }}>
+                  <div
+                    key={`${product.id}-${i}`}
+                    style={{ width: CARD_W, flexShrink: 0 }}
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
+                    onClickCapture={(e) => { if (wasDragged.current) { e.preventDefault(); e.stopPropagation(); } }}
+                  >
                     <ProductCard
                       product={product}
                       featured={false}

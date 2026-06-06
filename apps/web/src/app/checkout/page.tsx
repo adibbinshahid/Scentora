@@ -14,7 +14,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { useSession } from "next-auth/react";
 import { formatPrice } from "@/lib/utils";
 import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
-import NavbarServer from "@/components/NavbarServer";
+import Navbar from "@/components/Navbar";
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith("pk_test_placeholder")
   ? null
@@ -230,7 +230,7 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <NavbarServer />
+      <Navbar />
       <div className="pt-20 min-h-screen">
         <div className="max-w-6xl mx-auto px-6 py-12">
           {/* Header */}

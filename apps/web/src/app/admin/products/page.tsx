@@ -2,7 +2,8 @@ export const dynamic = "force-dynamic";
 import { prisma } from "db";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
-import { Plus, Pencil, Star } from "lucide-react";
+import { Plus, Pencil, Star, Images } from "lucide-react";
+import { parseJsonArray } from "@/lib/utils";
 import DeleteProductButton from "@/components/admin/DeleteProductButton";
 
 export default async function AdminProductsPage() {
@@ -22,7 +23,7 @@ export default async function AdminProductsPage() {
   });
   const avgMap = new Map(reviewStats.map((s) => [s.productId, s._avg.rating ?? 0]));
 
-  const headers = ["Product", "Concentration", "Variants / Price", "Stock", "Reviews & Rating", "Status", "Edit", "Delete"];
+  const headers = ["Product", "Concentration", "Variants / Price", "Stock", "Images", "Reviews & Rating", "Status", "Edit", "Delete"];
 
   return (
     <div className="space-y-6">
@@ -56,6 +57,7 @@ export default async function AdminProductsPage() {
               const totalStock = p.variants.reduce((s, v) => s + v.stock, 0);
               const avg = avgMap.get(p.id) ?? 0;
               const count = p._count.reviews;
+              const imgCount = parseJsonArray(p.images).length;
               return (
                 <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
                   <td className="px-4 py-3">
@@ -71,6 +73,14 @@ export default async function AdminProductsPage() {
                     <span className={totalStock <= 5 ? "text-red-400" : totalStock <= 15 ? "text-amber-400" : "text-green-400"}>
                       {totalStock}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <Images size={11} className={imgCount === 0 ? "text-red-400" : "text-text-muted"} />
+                      <span className={imgCount === 0 ? "text-red-400 text-xs" : "text-text-secondary text-xs"}>
+                        {imgCount === 0 ? "None" : imgCount}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     {count > 0 ? (

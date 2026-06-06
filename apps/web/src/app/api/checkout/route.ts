@@ -80,8 +80,17 @@ export async function POST(req: NextRequest) {
   }, 0);
 
   // Coupon validation
+  // Load store settings (tax, shipping) from DB with fallback defaults
+  const settingsRows = await prisma.siteContent.findMany({
+    where: { key: { in: ["store_tax_rate", "store_shipping_fee", "store_free_shipping_threshold"] } },
+  });
+  const settings = Object.fromEntries(settingsRows.map((r) => [r.key, r.value]));
+  const taxRate = parseFloat(settings["store_tax_rate"] ?? "8") / 100;
+  const flatShippingFee = parseFloat(settings["store_shipping_fee"] ?? "15");
+  const freeShippingThreshold = parseFloat(settings["store_free_shipping_threshold"] ?? "200");
+
   let discountAmount = 0;
-  let shippingCost = subtotal >= 200 ? 0 : 15;
+  let shippingCost = subtotal >= freeShippingThreshold ? 0 : flatShippingFee;
   let validatedCouponCode: string | undefined;
 
   if (couponCode) {
@@ -97,7 +106,7 @@ export async function POST(req: NextRequest) {
   }
 
   const taxableAmount = Math.max(0, subtotal - discountAmount);
-  const tax = taxableAmount * 0.08;
+  const tax = taxableAmount * taxRate;
   const total = taxableAmount + shippingCost + tax;
   const totalCents = Math.round(total * 100);
 

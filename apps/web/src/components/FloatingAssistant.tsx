@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 
@@ -41,7 +41,26 @@ export default function FloatingAssistant() {
   const [messages, setMessages]   = useState<Message[]>([WELCOME]);
   const [input, setInput]         = useState("");
   const [streaming, setStreaming] = useState(false);
+  const [bottomOffset, setBottomOffset] = useState(24);
   const bottomRef                 = useRef<HTMLDivElement>(null);
+
+  // Nudge button up when footer is visible so it doesn't overlap
+  useEffect(() => {
+    const footer = document.querySelector("footer");
+    if (!footer) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setBottomOffset(entry.intersectionRect.height + 16);
+        } else {
+          setBottomOffset(24);
+        }
+      },
+      { threshold: Array.from({ length: 101 }, (_, i) => i / 100) }
+    );
+    obs.observe(footer);
+    return () => obs.disconnect();
+  }, []);
   const inputRef                  = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -101,7 +120,7 @@ export default function FloatingAssistant() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9998] flex flex-col items-end gap-3">
+    <div className="fixed right-4 sm:right-6 z-[9990] flex flex-col items-end gap-3" style={{ bottom: bottomOffset }}>
       <AnimatePresence>
         {open && (
           <motion.div

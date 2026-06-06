@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Upload, X, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Upload, X, ArrowLeft, ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
 import toast from "react-hot-toast";
 import { parseJsonArray } from "@/lib/utils";
 
@@ -85,7 +85,10 @@ export default function ProductForm({
 
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string[]>([]);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const dragIdx = useRef<number | null>(null);
+  const dragOverIdx = useRef<number | null>(null);
 
   useEffect(() => {
     if (lightboxIdx === null) return;
@@ -110,34 +113,53 @@ export default function ProductForm({
     }));
   }
 
+  async function uploadFile(file: File): Promise<string | null> {
+    const urlRes = await fetch("/api/admin/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename: file.name, contentType: file.type }),
+    });
+    const urlData = await urlRes.json().catch(() => ({}));
+    if (!urlRes.ok) return null;
+    const uploadRes = await fetch(urlData.signedUrl, {
+      method: "PUT", body: file, headers: { "Content-Type": file.type },
+    });
+    return uploadRes.ok ? urlData.publicUrl : null;
+  }
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
     setUploadingImage(true);
+    setUploadProgress(files.map((f) => f.name));
     try {
-      const urlRes = await fetch("/api/admin/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, contentType: file.type }),
-      });
-      const urlData = await urlRes.json().catch(() => ({}));
-      if (!urlRes.ok) { toast.error(urlData.error ?? "Upload failed"); return; }
-
-      const uploadRes = await fetch(urlData.signedUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      });
-      if (!uploadRes.ok) { toast.error("Upload failed"); return; }
-
-      set("images", [...form.images, urlData.publicUrl]);
-      toast.success("Image uploaded");
+      const results = await Promise.all(files.map(uploadFile));
+      const succeeded = results.filter(Boolean) as string[];
+      const failed = results.filter((r) => !r).length;
+      set("images", [...form.images, ...succeeded]);
+      if (succeeded.length) toast.success(`${succeeded.length} image${succeeded.length > 1 ? "s" : ""} uploaded`);
+      if (failed) toast.error(`${failed} upload${failed > 1 ? "s" : ""} failed`);
     } catch {
       toast.error("Upload failed");
     } finally {
       setUploadingImage(false);
+      setUploadProgress([]);
       if (fileRef.current) fileRef.current.value = "";
     }
+  }
+
+  function handleDragStart(i: number) { dragIdx.current = i; }
+  function handleDragEnter(i: number) { dragOverIdx.current = i; }
+  function handleDragEnd() {
+    const from = dragIdx.current;
+    const to = dragOverIdx.current;
+    if (from === null || to === null || from === to) { dragIdx.current = null; dragOverIdx.current = null; return; }
+    const imgs = [...form.images];
+    const [moved] = imgs.splice(from, 1);
+    imgs.splice(to, 0, moved);
+    set("images", imgs);
+    dragIdx.current = null;
+    dragOverIdx.current = null;
   }
 
   function removeImage(idx: number) {
@@ -316,22 +338,46 @@ export default function ProductForm({
           </div>
         </div>
 
+        {form.images.length > 0 && (
+          <p className="text-[10px] text-text-muted mb-2">Drag to reorder · first image = primary</p>
+        )}
         <div className="flex flex-wrap gap-3 mb-4">
           {form.images.map((img, i) => (
-            <div key={i} className="relative group w-24 h-32 bg-bg-tertiary border border-border-primary overflow-hidden">
+            <div
+              key={img + i}
+              draggable
+              onDragStart={() => handleDragStart(i)}
+              onDragEnter={() => handleDragEnter(i)}
+              onDragEnd={handleDragEnd}
+              onDragOver={(e) => e.preventDefault()}
+              className="relative group w-24 h-32 bg-bg-tertiary border border-border-primary overflow-hidden cursor-grab active:cursor-grabbing select-none"
+              style={{ opacity: 1 }}
+            >
+              {/* Drag handle */}
+              <div className="absolute top-1 left-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                <GripVertical size={12} className="text-white drop-shadow" />
+              </div>
               <img
                 src={img} alt=""
                 className="w-full h-full object-cover cursor-zoom-in"
                 onClick={() => setLightboxIdx(i)}
                 onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }}
+                draggable={false}
               />
               <button
-                onClick={() => removeImage(i)}
-                className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => { e.stopPropagation(); removeImage(i); }}
+                className="absolute top-1 right-1 z-20 w-5 h-5 bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X size={10} />
               </button>
-              {i === 0 && <span className="absolute bottom-0 left-0 right-0 text-[8px] text-center py-0.5 bg-gold-primary text-bg-primary uppercase tracking-wider">Primary</span>}
+              {i === 0 && <span className="absolute bottom-0 left-0 right-0 text-[8px] text-center py-0.5 bg-gold-primary text-bg-primary uppercase tracking-wider z-10">Primary</span>}
+            </div>
+          ))}
+          {/* Uploading placeholders */}
+          {uploadProgress.map((name) => (
+            <div key={name} className="w-24 h-32 bg-bg-tertiary border border-border-primary flex flex-col items-center justify-center gap-1">
+              <Upload size={14} className="text-gold-primary animate-pulse" />
+              <span className="text-[8px] text-text-muted text-center px-1 truncate w-full text-center">{name}</span>
             </div>
           ))}
         </div>
@@ -381,14 +427,14 @@ export default function ProductForm({
           </div>
         )}
         <div className="flex gap-3 flex-wrap">
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+          <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploadingImage}
             className="flex items-center gap-2 px-4 py-2 text-[11px] tracking-[0.15em] uppercase border border-border-primary text-text-secondary hover:border-border-gold hover:text-text-primary transition-colors disabled:opacity-50"
           >
-            <Upload size={13} /> {uploadingImage ? "Uploading…" : "Upload Image"}
+            <Upload size={13} /> {uploadingImage ? `Uploading ${uploadProgress.length}…` : "Upload Images"}
           </button>
           <div className="flex gap-2 flex-1 min-w-48">
             <input

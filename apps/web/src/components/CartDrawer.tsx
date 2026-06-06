@@ -124,7 +124,7 @@ export default function CartDrawer() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-40" style={{ top: "var(--banner-h)" }}
+            className="fixed inset-0 bg-black/60 z-[99997]" style={{ top: "var(--banner-h)" }}
             onClick={() => setCartOpen(false)}
           />
         )}
@@ -138,7 +138,7 @@ export default function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.32 }}
-            className="fixed right-0 bottom-0 w-full max-w-md glass-card-dark border-l border-border-primary z-50 flex flex-col" style={{ top: "var(--banner-h)" }}
+            className="fixed right-0 bottom-0 w-full max-w-md glass-card-dark border-l border-border-primary z-[99998] flex flex-col" style={{ top: "var(--banner-h)" }}
           >
             {/* Confirm overlay */}
             <AnimatePresence>
