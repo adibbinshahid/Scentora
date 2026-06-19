@@ -7,6 +7,7 @@ import { SessionProvider } from "next-auth/react";
 import { Toaster } from "react-hot-toast";
 import CartDrawer from "@/components/CartDrawer";
 import FloatingAssistant from "@/components/FloatingAssistant";
+import FloatingDemoLinks from "@/components/FloatingDemoLinks";
 import QuickAddModal from "@/components/QuickAddModal";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -30,6 +31,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <CartDrawer />
         <QuickAddModal />
         {!pathname.startsWith("/admin") && <FloatingAssistant />}
+        {!pathname.startsWith("/admin") && <FloatingDemoLinks />}
         <Toaster
           position="bottom-right"
           toastOptions={{
