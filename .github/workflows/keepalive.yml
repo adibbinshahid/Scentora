@@ -16,7 +16,7 @@ jobs:
         run: |
           RESPONSE=$(curl --silent --show-error --write-out "\n__STATUS__%{http_code}" \
             --request GET \
-            --header "Authorization: Bearer ${{ secrets.MAINTENANCE_SECRET }}" \
+            --header "Authorization: Bearer ${{ secrets.KEEP_ALIVE_TOKEN }}" \
             "${{ secrets.SITE_URL }}/api/system-maintenance")
 
           BODY=$(echo "$RESPONSE" | sed '/^__STATUS__/d')

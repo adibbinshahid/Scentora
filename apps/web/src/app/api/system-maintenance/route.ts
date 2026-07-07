@@ -4,9 +4,9 @@ import { prisma } from "db";
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 function verifySecret(req: NextRequest): boolean {
-  const secret = process.env.MAINTENANCE_SECRET;
+  const secret = process.env.KEEP_ALIVE_TOKEN;
   if (!secret) {
-    console.error("[maintenance] MAINTENANCE_SECRET env var not set");
+    console.error("[maintenance] KEEP_ALIVE_TOKEN env var not set");
     return false;
   }
   const header = req.headers.get("authorization") ?? "";
