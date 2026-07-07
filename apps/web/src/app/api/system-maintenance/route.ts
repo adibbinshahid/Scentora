@@ -3,27 +3,20 @@ import { prisma } from "db";
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return mismatch === 0;
-}
-
 function verifySecret(req: NextRequest): boolean {
-  const header = req.headers.get("authorization") ?? "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
-  if (!token) return false;
-
-  // Accept MAINTENANCE_SECRET (manual calls) or CRON_SECRET (Vercel cron auto-injection)
-  const accepted = [process.env.MAINTENANCE_SECRET, process.env.CRON_SECRET].filter(Boolean) as string[];
-  if (accepted.length === 0) {
-    console.error("[maintenance] no secret env vars set (MAINTENANCE_SECRET or CRON_SECRET)");
+  const secret = process.env.MAINTENANCE_SECRET;
+  if (!secret) {
+    console.error("[maintenance] MAINTENANCE_SECRET env var not set");
     return false;
   }
-  return accepted.some((secret) => timingSafeEqual(token, secret));
+  const header = req.headers.get("authorization") ?? "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+  if (!token || token.length !== secret.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < secret.length; i++) {
+    mismatch |= token.charCodeAt(i) ^ secret.charCodeAt(i);
+  }
+  return mismatch === 0;
 }
 
 // ── Checks ────────────────────────────────────────────────────────────────────
