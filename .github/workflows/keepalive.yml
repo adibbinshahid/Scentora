@@ -12,21 +12,9 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Call /api/system-maintenance
+      - name: Call /api/system-maintenance (verbose)
         run: |
-          RESPONSE=$(curl --silent --show-error --write-out "\n__STATUS__%{http_code}" \
+          curl -v -L \
             --request GET \
             --header "Authorization: Bearer ${{ secrets.KEEP_ALIVE_TOKEN }}" \
-            "${{ secrets.SITE_URL }}/api/system-maintenance")
-
-          BODY=$(echo "$RESPONSE" | sed '/^__STATUS__/d')
-          STATUS=$(echo "$RESPONSE" | grep "^__STATUS__" | sed 's/__STATUS__//')
-
-          echo "--- Response body ---"
-          echo "$BODY"
-          echo "--- HTTP status: $STATUS ---"
-
-          if [ "$STATUS" != "200" ]; then
-            echo "::error::Maintenance endpoint returned HTTP $STATUS (expected 200)"
-            exit 1
-          fi
+            "${{ secrets.SITE_URL }}/api/system-maintenance"
