@@ -1,53 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { requireAdmin } from "@/lib/admin";
-import { createClient } from "@supabase/supabase-js";
 
-export const config = {
-  api: { bodyParser: false },
-};
+const ALLOWED_CONTENT_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_BYTES = 20 * 1024 * 1024;
 
-export async function POST(req: NextRequest) {
-  const { error } = await requireAdmin();
-  if (error) return error;
+/**
+ * Mints short-lived client tokens so the browser uploads straight to Vercel Blob,
+ * bypassing the 4.5 MB serverless request-body limit.
+ *
+ * The type and size limits are baked into the token and enforced by Blob itself,
+ * so a tampered client cannot exceed them.
+ */
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const body = (await req.json()) as HandleUploadBody;
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.json(
-      { error: "Storage not configured — set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel env vars." },
-      { status: 500 }
-    );
+  try {
+    const result = await handleUpload({
+      body,
+      request: req,
+      onBeforeGenerateToken: async () => {
+        // Runs before every token is issued — this is the auth gate.
+        const { error } = await requireAdmin();
+        if (error) throw new Error("Unauthorized");
+
+        return {
+          allowedContentTypes: ALLOWED_CONTENT_TYPES,
+          maximumSizeInBytes: MAX_BYTES,
+          addRandomSuffix: true,
+        };
+      },
+    });
+
+    return NextResponse.json(result);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Upload failed.";
+    return NextResponse.json({ error: message }, { status: message === "Unauthorized" ? 401 : 400 });
   }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  const form = await req.formData();
-  const file = form.get("file") as File | null;
-
-  if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
-
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (!allowed.includes(file.type)) {
-    return NextResponse.json({ error: "Invalid file type. Use JPEG, PNG, WebP, or GIF." }, { status: 400 });
-  }
-
-  if (file.size > 20 * 1024 * 1024) {
-    return NextResponse.json({ error: "File too large (max 20 MB)." }, { status: 400 });
-  }
-
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  const { error: uploadError } = await supabase.storage
-    .from("perfumes")
-    .upload(filename, buffer, { contentType: file.type, upsert: false });
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
-  }
-
-  const { data } = supabase.storage.from("perfumes").getPublicUrl(filename);
-
-  return NextResponse.json({ url: data.publicUrl });
 }

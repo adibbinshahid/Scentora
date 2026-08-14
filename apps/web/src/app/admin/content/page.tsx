@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Upload, Save, ChevronDown, ChevronRight, Image as ImageIcon, Type, AlignLeft, Link as LinkIcon, Ruler } from "lucide-react";
 import toast from "react-hot-toast";
+import { upload } from "@vercel/blob/client";
 
 interface ContentItem {
   id: string;
@@ -302,24 +303,13 @@ export default function ContentPage() {
     if (!file) return;
     setUploading(key);
     try {
-      // Step 1: get signed upload URL (small JSON — stays within Vercel limit)
-      const urlRes = await fetch("/api/admin/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, contentType: file.type }),
+      // Uploads straight to Vercel Blob (bypasses the 4.5 MB serverless body limit).
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/admin/upload",
       });
-      const urlData = await urlRes.json().catch(() => ({}));
-      if (!urlRes.ok) { toast.error(urlData.error ?? "Upload failed."); return; }
 
-      // Step 2: upload file directly to Supabase (bypasses Vercel 4.5 MB body limit)
-      const uploadRes = await fetch(urlData.signedUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      });
-      if (!uploadRes.ok) { toast.error("Upload failed."); return; }
-
-      handleChange(key, urlData.publicUrl);
+      handleChange(key, blob.url);
       toast.success("Uploaded. Save to apply.");
     } catch {
       toast.error("Upload failed.");

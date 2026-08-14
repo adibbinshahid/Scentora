@@ -69,38 +69,6 @@ export default function FloatingDemoLinks() {
           style={{ color: "rgba(0,0,0,0.40)" }}
         />
       </a>
-
-      {/* Fiverr */}
-      <a
-        href="https://www.fiverr.com/adib_bin_shahid"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group flex items-center gap-3 pl-2 pr-4 py-2 transition-all duration-250 hover:scale-[1.03] hover:shadow-lg"
-        style={pill}
-      >
-        <div
-          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-          style={{ background: "#1DBF73", boxShadow: "0 2px 8px rgba(29,191,115,0.45)" }}
-        >
-          <span style={{ fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "-0.03em", lineHeight: 1 }}>
-            fiverr<span style={{ fontSize: 12 }}>.</span>
-          </span>
-        </div>
-        <div className="min-w-0">
-          <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(0,0,0,0.55)", lineHeight: 1.2, fontWeight: 700 }}>
-            Contact us on
-          </p>
-          <p style={{ fontSize: 13, fontWeight: 800, color: "rgba(0,0,0,0.88)", lineHeight: 1.3, letterSpacing: "0.01em" }}>
-            Fiverr
-          </p>
-        </div>
-        <ArrowRight
-          size={13}
-          strokeWidth={2}
-          className="ml-0.5 shrink-0 group-hover:translate-x-0.5 transition-transform duration-200"
-          style={{ color: "rgba(0,0,0,0.40)" }}
-        />
-      </a>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Upload, X, ArrowLeft, ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
 import toast from "react-hot-toast";
+import { upload } from "@vercel/blob/client";
 import { parseJsonArray } from "@/lib/utils";
 
 interface Variant {
@@ -114,17 +115,16 @@ export default function ProductForm({
   }
 
   async function uploadFile(file: File): Promise<string | null> {
-    const urlRes = await fetch("/api/admin/upload-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename: file.name, contentType: file.type }),
-    });
-    const urlData = await urlRes.json().catch(() => ({}));
-    if (!urlRes.ok) return null;
-    const uploadRes = await fetch(urlData.signedUrl, {
-      method: "PUT", body: file, headers: { "Content-Type": file.type },
-    });
-    return uploadRes.ok ? urlData.publicUrl : null;
+    try {
+      // Uploads straight to Vercel Blob (bypasses the 4.5 MB serverless body limit).
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/admin/upload",
+      });
+      return blob.url;
+    } catch {
+      return null;
+    }
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {

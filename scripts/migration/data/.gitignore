@@ -1,0 +1,4 @@
+# Migration working data — contains password hashes, customer orders, and
+# ~28 MB of image binaries. Never commit.
+*
+!.gitignore
