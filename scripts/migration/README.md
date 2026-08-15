@@ -11,9 +11,30 @@ All commands run from `apps/web`.
 | 1 | Export Supabase DB → JSON | **done** — 612 rows in `data/db-export.json` |
 | 2 | Download Storage images | **done** — 24 files (~28 MB) in `data/images/` |
 | — | Code moved to Vercel Blob | **done** — routes, call-sites, next.config, deps |
+| 4 | Import JSON → Neon | **done** — schema pushed, 612 rows, counts verified |
 | 3 | Upload images → Vercel Blob | blocked: needs `BLOB_READ_WRITE_TOKEN` |
-| 4 | Import JSON → Neon | blocked: needs Neon `DATABASE_URL` |
-| 5 | Rewrite image URLs in Neon | blocked: needs 3 + 4 |
+| 5 | Rewrite image URLs in Neon | blocked: needs 3 |
+
+Steps 3 and 4 are independent, so 4 ran first. The app now reads from Neon;
+image URLs in the database still point at Supabase until step 5, so product
+pages currently 500 on `next/image` with an "unconfigured hostname" error.
+That is expected mid-migration.
+
+## Environment notes
+
+There are three `.env` files. Both live ones now point at Neon:
+
+- `.env` (root) — what the running app resolves
+- `apps/web/.env` — what the Prisma CLI resolves when run from `apps/web`
+- `packages/db/.env` — was a stale SQLite leftover (`file:./dev.db`) against a
+  `postgresql` provider; retired to `.env.stale-sqlite-backup`
+
+Supabase values are commented inline in both live files, and full copies are
+at `.env.supabase-backup` (root and `apps/web`). Root `.gitignore` was
+widened from `**/.env` to `**/.env*` so those backups cannot be committed.
+
+Neon free tier scales to zero — the first query after an idle period can time
+out. Just re-run; the scripts are safe to retry.
 
 `data/` is gitignored — it holds password hashes, customer orders, and image
 binaries. Never commit it.
