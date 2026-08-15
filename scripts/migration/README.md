@@ -21,26 +21,55 @@ HTML, `next/image` optimizing Blob-hosted images successfully.
 
 Remaining: set the production env vars in Vercel and redeploy (below).
 
-## Production cutover
+## Production cutover — DONE
 
-Set these in Vercel → Project → Settings → Environment Variables, then redeploy.
+Vercel project `scentora`, production at <https://e-commerce-scentora.vercel.app>.
 
-- `DATABASE_URL` — Neon **pooled** string (host contains `-pooler`)
-- `DIRECT_URL` — Neon **direct** string (no `-pooler`)
-- `BLOB_READ_WRITE_TOKEN` / `BLOB_STORE_ID` — added automatically if the Blob
-  store was connected to the project; verify they are present
+`DATABASE_URL` and `DIRECT_URL` were replaced with the Neon pooled and direct
+strings for both Production and Preview. Blob vars came in automatically when
+the store was connected. Deployed via push to `main`.
 
-Delete the old `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` vars only after
-production is verified green.
+Verified in production: 11 public routes 200, all 10 product pages 200, admin
+307, **zero `supabase` strings in any served HTML**, Blob images serving, and
+`next/image` optimizing them. Upload path verified end-to-end against
+production with `06-verify-upload.ts`.
 
-## Untested: live admin upload
+### Gotcha: Vercel Data Cache survives redeploys
 
-Everything above was verified without admin credentials, which I do not have.
-The one path still unproven end-to-end is a real browser upload through
-`upload()` → `/api/admin/upload` → Blob, with an authenticated admin session.
-The `put()` half is proven (step 3 pushed 24 images with the same token) and
-the route compiles and rejects unauthenticated calls correctly — but sign in
-and upload one image via Admin → Content before deleting the Supabase project.
+After the deploy, product images were correct but the hero background still
+pointed at Supabase. The database was already clean — the stale value came
+from `unstable_cache` entries in Vercel's Data Cache, which persist across
+deployments. `getSiteContent` in `apps/web/src/lib/content.ts` caches under
+tag `content` with `revalidate: 3600`.
+
+Fixed with:
+
+```bash
+npx vercel cache invalidate --tag content,products,categories --yes
+```
+
+If stale content ever appears after a data change, that is the lever — not a
+redeploy.
+
+## Still outstanding
+
+**Supabase env vars remain in Vercel** (`SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`NEXT_PUBLIC_SUPABASE_URL`). Nothing reads them. Left in place deliberately
+until the Supabase project is deleted, so rollback stays possible.
+
+**Unrelated: production is missing several env vars.** `vercel env ls` shows
+only 11 variables, and these are absent from every environment:
+
+- `KEEP_ALIVE_TOKEN` — `api/system-maintenance` returns 401 when this is
+  unset, so the keepalive GitHub Action can never succeed. This likely
+  explains the recent keepalive debugging commits.
+- `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`,
+  `STRIPE_WEBHOOK_SECRET` — checkout cannot complete without these.
+- `GEMINI_API_KEY` — AI features unavailable.
+- `NEXTAUTH_URL`, `NEXT_PUBLIC_SITE_URL`
+
+All predate this migration. Not fixed here.
 
 ## Environment notes
 

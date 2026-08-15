@@ -123,7 +123,9 @@ main()
   .finally(async () => {
     if (blobUrl) {
       try {
-        await del(blobUrl);
+        // Pass the token explicitly — without it the SDK tries OIDC, which is
+        // not enabled for the development environment.
+        await del(blobUrl, { token: process.env.BLOB_READ_WRITE_TOKEN });
         console.log("cleanup: test blob deleted");
       } catch (e: any) {
         console.error("cleanup: blob delete failed —", e.message);
