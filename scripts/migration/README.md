@@ -53,10 +53,20 @@ redeploy.
 
 ## Still outstanding
 
-**Supabase env vars remain in Vercel** (`SUPABASE_URL`,
-`SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
-`NEXT_PUBLIC_SUPABASE_URL`). Nothing reads them. Left in place deliberately
-until the Supabase project is deleted, so rollback stays possible.
+**Supabase env vars have been removed from Vercel** — all four
+(`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`NEXT_PUBLIC_SUPABASE_URL`) deleted, then redeployed and re-verified: 11
+public routes 200, 10 product pages 200, admin 307, zero supabase refs,
+upload path still working.
+
+If a rollback is ever needed, `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+are still in `apps/web/.env` and `apps/web/.env.supabase-backup`. The two
+`NEXT_PUBLIC_*` values were not held locally, but both are readable from the
+Supabase dashboard (Settings → API) while the project exists.
+
+Vercel now holds exactly 7 variables: `DATABASE_URL`, `DIRECT_URL`,
+`BLOB_READ_WRITE_TOKEN`, `BLOB_STORE_ID`, `BLOB_WEBHOOK_PUBLIC_KEY`,
+`NEXTAUTH_SECRET`, `AUTH_TRUST_HOST`.
 
 **Unrelated: production is missing several env vars.** `vercel env ls` shows
 only 11 variables, and these are absent from every environment:
