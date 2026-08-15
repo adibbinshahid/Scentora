@@ -12,13 +12,35 @@ All commands run from `apps/web`.
 | 2 | Download Storage images | **done** — 24 files (~28 MB) in `data/images/` |
 | — | Code moved to Vercel Blob | **done** — routes, call-sites, next.config, deps |
 | 4 | Import JSON → Neon | **done** — schema pushed, 612 rows, counts verified |
-| 3 | Upload images → Vercel Blob | blocked: needs `BLOB_READ_WRITE_TOKEN` |
-| 5 | Rewrite image URLs in Neon | blocked: needs 3 |
+| 3 | Upload images → Vercel Blob | **done** — 24 images to `scentora-blob` (sin1) |
+| 5 | Rewrite image URLs in Neon | **done** — 10 products + 2 siteContent rows |
 
-Steps 3 and 4 are independent, so 4 ran first. The app now reads from Neon;
-image URLs in the database still point at Supabase until step 5, so product
-pages currently 500 on `next/image` with an "unconfigured hostname" error.
-That is expected mid-migration.
+**Local migration is complete.** Verified on `localhost:3001`: all 11 public
+routes 200, admin routes 307 (auth intact), zero `supabase` strings in served
+HTML, `next/image` optimizing Blob-hosted images successfully.
+
+Remaining: set the production env vars in Vercel and redeploy (below).
+
+## Production cutover
+
+Set these in Vercel → Project → Settings → Environment Variables, then redeploy.
+
+- `DATABASE_URL` — Neon **pooled** string (host contains `-pooler`)
+- `DIRECT_URL` — Neon **direct** string (no `-pooler`)
+- `BLOB_READ_WRITE_TOKEN` / `BLOB_STORE_ID` — added automatically if the Blob
+  store was connected to the project; verify they are present
+
+Delete the old `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` vars only after
+production is verified green.
+
+## Untested: live admin upload
+
+Everything above was verified without admin credentials, which I do not have.
+The one path still unproven end-to-end is a real browser upload through
+`upload()` → `/api/admin/upload` → Blob, with an authenticated admin session.
+The `put()` half is proven (step 3 pushed 24 images with the same token) and
+the route compiles and rejects unauthenticated calls correctly — but sign in
+and upload one image via Admin → Content before deleting the Supabase project.
 
 ## Environment notes
 
