@@ -40,3 +40,5 @@ yarn-error.log*
 /media
 src/payload/payload-types.ts
 .claude/
+.vercel
+.env*
